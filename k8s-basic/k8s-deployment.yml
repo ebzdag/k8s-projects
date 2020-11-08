@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secrets
+type: Opaque
+data:
+  username: cm9vdA== # echo -n "root" | base64
+  password: cGFzcw== # echo -n "pass" | base64
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image:  ebzdag/simplenodejs
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - name: nodejs-port
+          containerPort: 3000
+        volumeMounts:
+          - name: creds
+            mountPath: /etc/creds
+            readOnly: true
+        livenessProbe:
+            httpGet:
+              path: / 
+              port: nodejs-port
+            initialDelaySeconds: 15
+            timeoutSeconds: 30
+        readinessProbe:
+            httpGet:
+              path: / 
+              port: nodejs-port
+            initialDelaySeconds: 15
+            timeoutSeconds: 30
+      volumes:
+        - name: creds
+          secret:
+              secretName: db-secrets
+      nodeSelector:
+        hardware: high-spec
+

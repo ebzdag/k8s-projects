@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helloworld
+  labels:
+    name: helloworld
+spec:
+  containers:
+  - name: myapp
+    image: ebzdag/simplenodejs
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - name: nodejs-port
+        containerPort: 3000
+  nodeSelector:
+    hardware: high-spec
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-service
+spec:
+  ports:
+  - port: 80
+    targetPort: nodejs-port
+    protocol: TCP
+  selector:
+    name: helloworld
+  type: LoadBalancer

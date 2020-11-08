@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+   name: freeradius-svc
+   labels:
+     name: freeradius
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.1.10.100
+  ports:
+  - name: radius-auth
+    protocol: UDP
+    port: 1812
+  selector:
+    app: freeradius
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freeradius-deployment
+  labels:
+    app: freeradius
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: freeradius
+  template:
+    metadata:
+      labels:
+        app: freeradius
+    spec:
+      restartPolicy: Always
+      nodeSelector:
+        loadbalancer: "true"
+      volumes:
+      - name: freeradius-config
+        configMap:
+          name: freeradius-config
+      containers:
+      - name: freeradius
+        image: freeradius/freeradius-server
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 1812
+          name: radauth-port
+        volumeMounts:
+        - name: freeradius-config
+          mountPath: /etc/freeradius/proxy.conf
+          subPath: proxy.conf
+        - name: freeradius-config
+          mountPath: /etc/freeradius/clients.conf
+          subPath: clients.conf
+        - name: freeradius-config
+          mountPath: /etc/freeradius/users
+          subPath: users
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: freeradius-config
+  labels:
+    app: freeradius
+data:
+  proxy.conf: |
+    realm dcstest.com {
+    }
+  clients.conf: |
+    client TEST_AP {
+        ipaddr = 0.0.0.0/0
+        secret = radius
+    }
+  users: |
+    LegatoTester Cleartext-Password := "myWpaEapPassword"

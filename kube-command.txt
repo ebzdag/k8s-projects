@@ -1,0 +1,14 @@
+kubectl set image deployment/myapp myapp=ebzdag/simplenodejs:2
+kubectl rollout status deployment/myapp
+kubectl rollout history deployment/myapp
+kubectl rollout undo deployment/myapp --to-revision=2
+
+kubectl create -f k8s-basics.yml && watch -n1 kubectl get pods
+
+kubectl exec -it ... -- tail /timing
+
+kubectl create secret generic db-user --from-file=./username.txt --from-file=./password.txt
+kubectl create secret generic ssl-certificate --from-file=ssh-privatekey=~/.ssh/ida_rsa --ssl-cert=ssl-cert=mysslcert.crt
+
+echo -n "root" | base64
+kubectl config view
